@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>¿Quieres pasar San Valentín conmigo?</title>
+  <style>
+    :root{--bg:#ffeef0;--card:#fff;--accent:#e91e63}
+    *{box-sizing:border-box}
+    body{margin:0;height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--bg),#fff);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+    .card{background:var(--card);padding:36px;border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,0.08);text-align:center;max-width:520px}
+    h1{margin:0 0 8px;color:#333;font-size:26px}
+    p{margin:0 0 22px;color:#666}
+    .buttons{display:flex;gap:18px;justify-content:center;align-items:center}
+    button{cursor:pointer;padding:14px 26px;border-radius:12px;border:0;font-size:18px;font-weight:600;transition:transform .25s ease,box-shadow .15s ease}
+    #si{background:linear-gradient(90deg,#ff7ab6,#ff4081);color:white;box-shadow:0 6px 18px rgba(233,30,99,0.2)}
+    #no{background:#f0f0f0;color:#333}
+    .note{margin-top:18px;color:#999;font-size:14px}
+    .confetti{font-size:20px;color:var(--accent);margin-top:18px}
+    @media (max-width:420px){.card{padding:22px}button{padding:12px 18px;font-size:16px}}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Eva, ¿quieres pasar San Valentín conmigo?</h1>
+    <p>Por favor, elige una opción: <strong>sí</strong> o <strong>no</strong>.</p>
+
+    <div class="buttons">
+      <button id="si">Sí</button>
+      <button id="no">No</button>
+    </div>
+
+    <div class="note">Si pulsas "No", el botón "Sí" se hará más grande hasta que lo pulses.</div>
+    <div id="message" class="confetti" aria-live="polite"></div>
+    <div id="confetti-root" aria-hidden="true"></div>
+  </div>
+
+  <script>
+    const siBtn = document.getElementById('si');
+    const noBtn = document.getElementById('no');
+    const msg = document.getElementById('message');
+    let scale = 1;
+
+    // Al pulsar NO aumentamos el tamaño del botón SÍ
+    noBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      scale = Math.min(scale + 0.18, 6); // límite razonable
+      siBtn.style.transform = `scale(${scale})`;
+      siBtn.style.boxShadow = '0 10px 30px rgba(233,30,99,0.25)';
+      // pequeña vibración visual en NO para jugar
+      noBtn.animate([
+        { transform: 'translateY(0)' },
+        { transform: 'translateY(-6px)' },
+        { transform: 'translateY(0)' }
+      ], { duration: 220, easing: 'ease-out' });
+    });
+
+    // Confetti helper
+    function launchConfetti(count = 80) {
+      const root = document.getElementById('confetti-root');
+      const colors = ['#ff6b9a','#ffd166','#9ad3bc','#ff9a8b','#a78bfa'];
+      for (let i = 0; i < count; i++) {
+        const el = document.createElement('div');
+        el.className = 'confetti-piece';
+        el.style.background = colors[Math.floor(Math.random()*colors.length)];
+        el.style.left = (50 + (Math.random()-0.5)*80) + '%';
+        el.style.top = '-10%';
+        el.style.transform = `rotate(${Math.random()*360}deg)`;
+        root.appendChild(el);
+        // remove after animation
+        setTimeout(() => el.remove(), 4000 + Math.random()*1000);
+      }
+    }
+
+    // simple chime using WebAudio
+    function playChime() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = 'sine';
+        o.frequency.value = 880;
+        o.connect(g);
+        g.connect(ctx.destination);
+        g.gain.setValueAtTime(0, ctx.currentTime);
+        g.gain.linearRampToValueAtTime(0.12, ctx.currentTime + 0.02);
+        o.start();
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.7);
+        setTimeout(() => o.stop(), 800);
+      } catch(e) {
+        // ignore if audio not allowed
+      }
+    }
+
+    // Al pulsar SÍ mostramos el mensaje de confirmación
+    siBtn.addEventListener('click', () => {
+      msg.textContent = '¡Sí! Me encantaría pasar San Valentín contigo, Eva! ❤️';
+      launchConfetti();
+      playChime();
+      // efecto final
+      siBtn.animate([
+        { transform: `scale(${scale})` },
+        { transform: `scale(${Math.min(scale + 0.8, 10)})` },
+        { transform: `scale(${scale})` }
+      ], { duration: 700, easing: 'cubic-bezier(.2,.9,.2,1)' });
+      // desactivar botones
+      siBtn.disabled = true; noBtn.disabled = true;
+    });
+  </script>
+</body>
+</html>
